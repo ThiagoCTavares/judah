@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      includeAssets: ['Logo.svg', 'apple-touch-icon.png'],
       workbox: {
         // Evita falha intermitente do terser na etapa de generateSW.
         mode: 'development',
@@ -18,6 +19,23 @@ export default defineConfig({
         name: 'Judah',
         short_name: 'Judah',
         theme_color: '#ffffff',
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+          {
+            src: 'apple-touch-icon.png',
+            sizes: '180x180',
+            type: 'image/png',
+          },
+        ],
       },
     }),
   ],

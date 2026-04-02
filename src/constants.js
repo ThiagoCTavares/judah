@@ -63,14 +63,6 @@ export const MONTH_NAMES = [
 export const WEEKDAYS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 export const WEEKDAYS_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
-export const DAILY_TASKS = [
-  { id: 1, time: '08:30', icon: AllIcons.Coffee, color: '#f59e0b' },   
-  { id: 2, time: '10:00', icon: AllIcons.Code, color: '#3b82f6' },     
-  { id: 3, time: '14:30', icon: AllIcons.BookOpen, color: '#ec4899' }, 
-  { id: 4, time: '18:00', icon: AllIcons.Barbell, color: '#10b981' },  
-  { id: 5, time: '20:00', icon: AllIcons.Sun, color: '#8b5cf6' },      
-]
-
 const PHOSPHOR_META_BY_PASCAL_NAME = new Map(
   PHOSPHOR_CORE_ICONS.map((meta) => [meta.pascal_name, meta])
 )
@@ -116,6 +108,15 @@ export const PROJECT_ICONS = Object.entries(AllIcons)
     if (!hasMetaA && hasMetaB) return 1
     return a.id.localeCompare(b.id)
   })
+
+const PROJECT_ICON_MAP = new Map(
+  PROJECT_ICONS.map((projectIcon) => [projectIcon.id, projectIcon.icon])
+)
+
+export function getProjectIconById(iconId) {
+  if (!iconId) return AllIcons.Plus
+  return PROJECT_ICON_MAP.get(iconId) || AllIcons.Plus
+}
 
 // --- MEGA PALETA DE CORES EXPANDIDA (Pesquisável) ---
 export const PROJECT_COLORS = [

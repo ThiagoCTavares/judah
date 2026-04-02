@@ -1,14 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Clock, CaretDown, Check, Hash, PuzzlePiece, ListChecks, PencilSimple } from '@phosphor-icons/react'
-
-// Mock de Projetos
-const PROJECTS = [
-  { id: 1, name: 'Pessoal', color: '#f59e0b' },
-  { id: 2, name: 'Trabalho', color: '#3b82f6' },
-  { id: 3, name: 'Estudos', color: '#ec4899' },
-  { id: 4, name: 'Saúde', color: '#10b981' },
-]
+import { X, Clock, CaretDown, Hash, PuzzlePiece, ListChecks, PencilSimple } from '@phosphor-icons/react'
+import { formatDateKey } from '../task-utils'
 
 // Opções de Horário
 const TIME_OPTIONS = [
@@ -19,15 +12,24 @@ const TIME_OPTIONS = [
   { id: 'custom', label: 'Personalizado' }
 ]
 
-export function NewTaskModal({ onClose }) {
+const MotionDiv = motion.div
+
+function createTaskId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  return `task-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+export function NewTaskModal({ onClose, onSaveTask, projects, selectedDate }) {
   // ESTADOS
   const [taskName, setTaskName] = useState('')
   const [selectedProject, setSelectedProject] = useState('')
   const [timeOption, setTimeOption] = useState(null)
-  
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
-  
+  const [details, setDetails] = useState('')
   const [isProjectVisible, setIsProjectVisible] = useState(false)
   const [areCustomTimesValid, setAreCustomTimesValid] = useState(false)
 
@@ -40,9 +42,9 @@ export function NewTaskModal({ onClose }) {
   )
 
   // Cores
-  const darkColor = '#363636'; 
-  const mediumColor = '#919191';
-  const lightColor = '#CCCCCC'; 
+  const darkColor = 'var(--judah-dark)'
+  const mediumColor = 'var(--judah-medium)'
+  const lightColor = 'var(--judah-light)'
 
   // --- HANDLERS ---
   const handleNameCommit = () => {
@@ -77,6 +79,24 @@ export function NewTaskModal({ onClose }) {
     setAreCustomTimesValid(false)
   }
 
+  const handleSave = () => {
+    if (!taskName.trim() || !timeOption) return
+
+    onSaveTask({
+      id: createTaskId(),
+      name: taskName.trim(),
+      dateKey: formatDateKey(selectedDate),
+      projectId: selectedProject === 'none' ? null : selectedProject,
+      timeOption,
+      startTime: timeOption === 'custom' ? startTime : '',
+      endTime: timeOption === 'custom' ? endTime : '',
+      details: details.trim(),
+      createdAt: new Date().toISOString(),
+      status: 'active',
+      completedAt: null,
+    })
+  }
+
   // Estilos reutilizáveis
   const labelStyle = {
     display: 'flex', alignItems: 'center', gap: '8px',
@@ -88,34 +108,22 @@ export function NewTaskModal({ onClose }) {
 
   return (
     <>
-      <motion.div
+      <MotionDiv
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 9998,
-          backgroundColor: 'rgba(0,0,0,0.05)', 
-          backdropFilter: 'blur(1px)' 
-        }}
+        className="modal-backdrop"
       />
 
-      <motion.div
+      <MotionDiv
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="modal-sheet"
         style={{ 
-          position: 'fixed', 
-          bottom: 0, left: 0, right: 0, 
-          zIndex: 9999, 
           height: '70vh', 
-          backgroundColor: '#e8e8e8', 
-          borderRadius: '0px', 
-          display: 'flex', 
-          flexDirection: 'column',
-          fontFamily: '"depot-new-web", "depot-new", sans-serif',
-          boxShadow: '0 -10px 40px rgba(0,0,0,0.1)',
           boxSizing: 'border-box'
         }}
       >
@@ -131,26 +139,16 @@ export function NewTaskModal({ onClose }) {
             boxShadow: '0 -4px 10px rgba(0,0,0,0.05)', paddingLeft: '4px' 
           }}
         >
-           <X size={18} color="#ffffff" weight="bold" />
+           <X size={18} color="var(--judah-pure)" weight="bold" />
         </div>
 
         {/* BODY (ÁREA DE SCROLL) */}
-        <div style={{ 
-          flex: 1, 
-          overflowY: 'auto', 
-          padding: '40px 24px 128px 24px',
-          width: '100%', 
-          boxSizing: 'border-box',
-          // --- A MÁGICA DO DEGRADÊ SUPERIOR ---
-          // Cria uma máscara que é transparente no topo (0%) e fica totalmente visível após 40px
-          maskImage: 'linear-gradient(to bottom, transparent 0%, black 40px, black 100%)',
-          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 40px, black 100%)'
-        }}>
+        <div className="modal-sheet__body">
           
           {/* 1. NOME */}
           <div style={sectionStyle}>
             <label style={labelStyle}>
-              <Hash size={16} weight="bold" /> Atividade
+              <Hash size={16} weight="bold" /> Task
             </label>
 
             <input 
@@ -169,7 +167,7 @@ export function NewTaskModal({ onClose }) {
           </div>
 
           {/* 2. PROJETO */}
-          <motion.div
+          <MotionDiv
             initial={false}
             animate={{ 
               height: showProjectSection ? 'auto' : 0, 
@@ -188,9 +186,10 @@ export function NewTaskModal({ onClose }) {
                 onChange={(e) => setSelectedProject(e.target.value)}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, zIndex: 10 }}
               >
-                <option value="">Sem projeto</option>
-                {PROJECTS.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
+                <option value="" disabled>Selecione...</option>
+                <option value="none">Sem projeto</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>{project.name}</option>
                 ))}
               </select>
 
@@ -200,17 +199,24 @@ export function NewTaskModal({ onClose }) {
                 width: '100%', boxSizing: 'border-box', borderBottom: '1px solid rgba(0,0,0,0.05)'
               }}>
                 <span style={{ fontSize: '18px', fontWeight: 500, color: selectedProject ? darkColor : mediumColor }}>
-                  {selectedProject 
-                    ? PROJECTS.find(p => p.id == selectedProject)?.name 
-                    : 'Selecione um projeto...'}
+                  {selectedProject === 'none'
+                    ? 'Sem projeto'
+                    : selectedProject
+                      ? projects.find((project) => project.id === selectedProject)?.name
+                      : 'Selecione um projeto...'}
                 </span>
                 <CaretDown size={20} color={mediumColor} weight="bold" />
               </div>
             </div>
-          </motion.div>
+            {projects.length === 0 && (
+              <p style={{ margin: '12px 0 0 0', fontSize: '0.875rem', color: mediumColor }}>
+                Ainda não existe nenhum projeto salvo. Você pode continuar usando "Sem projeto".
+              </p>
+            )}
+          </MotionDiv>
 
           {/* 3. HORÁRIO */}
-          <motion.div
+          <MotionDiv
             initial={false}
             animate={{ 
               height: showTimeSection ? 'auto' : 0, 
@@ -304,10 +310,10 @@ export function NewTaskModal({ onClose }) {
               </div>
 
             </div>
-          </motion.div>
+          </MotionDiv>
 
           {/* 4. DETALHES */}
-          <motion.div
+          <MotionDiv
              initial={false}
              animate={{ 
                height: showDetailsAndButton ? 'auto' : 0, 
@@ -322,6 +328,8 @@ export function NewTaskModal({ onClose }) {
             <textarea 
               rows={5}
               placeholder="Adicione notas, links ou observações..."
+              value={details}
+              onChange={(event) => setDetails(event.target.value)}
               style={{ 
                 width: '100%', backgroundColor: 'transparent',
                 borderRadius: '16px', padding: '20px', 
@@ -330,28 +338,22 @@ export function NewTaskModal({ onClose }) {
                 boxSizing: 'border-box'
               }}
             />
-          </motion.div>
+          </MotionDiv>
         </div>
 
         {/* BOTÃO (OVERLAY INFERIOR COM DEGRADÊ) */}
         <AnimatePresence>
           {showDetailsAndButton && (
-            <motion.div 
+            <MotionDiv
               initial={{ y: 100 }}
               animate={{ y: 0 }}
               exit={{ y: 100 }}
-              style={{ 
-                position: 'absolute', bottom: 0, left: 0, right: 0, 
-                padding: '24px 24px 32px 24px', 
-                // O degradê inferior original
-                background: 'linear-gradient(to top, #e8e8e8 80%, rgba(232,232,232,0))',
-                boxSizing: 'border-box'
-              }}
+              className="modal-sheet__footer"
             >
               <button 
-                onClick={onClose}
+                onClick={handleSave}
                 style={{ 
-                  width: '100%', backgroundColor: darkColor, color: 'white', 
+                  width: '100%', backgroundColor: darkColor, color: 'var(--judah-pure)', 
                   padding: '18px', borderRadius: '12px',
                   fontSize: '18px', fontWeight: 500,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
@@ -361,11 +363,11 @@ export function NewTaskModal({ onClose }) {
                 <PencilSimple weight="bold" size={20} />
                 Anotar
               </button>
-            </motion.div>
+            </MotionDiv>
           )}
         </AnimatePresence>
 
-      </motion.div>
+      </MotionDiv>
     </>
   )
 }

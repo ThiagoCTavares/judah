@@ -2,7 +2,190 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
+:root {
+  font-family: "depot-new-web", "depot-new", "Depot New", sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #121212;
+  background-color: #e8e8e8;
+  color-scheme: light;
+  --judah-black: #121212;
+  --judah-dark: #363636;
+  --judah-medium: #919191;
+  --judah-light: #cccccc;
+  --judah-white: #e8e8e8;
+  --judah-pure: #ffffff;
+  --app-horizontal-padding: 24px;
+  --app-bottom-offset: calc(8px + env(safe-area-inset-bottom));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  height: 100%;
+  overscroll-behavior: none;
+  background-color: var(--judah-white);
+  scrollbar-width: none;
+}
+
 body {
-  overscroll-behavior-y: none;
+  min-width: 100%;
+  min-height: 100%;
+  margin: 0;
+  background-color: var(--judah-white);
+  color: var(--judah-black);
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+::selection {
+  background: rgba(18, 18, 18, 0.12);
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+.app-root {
+  min-height: 100dvh;
+  color: var(--judah-black);
+  background-color: var(--judah-white);
+}
+
+.app-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  height: 100dvh;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  background-color: var(--judah-white);
+  scrollbar-width: none;
+}
+
+.app-panel {
+  min-width: 100vw;
+  width: 100vw;
+  height: 100%;
+  overflow-y: auto;
+  padding-bottom: calc(128px + env(safe-area-inset-bottom));
+  scrollbar-width: none;
+}
+
+.app-nav {
+  position: fixed;
+  right: 0;
+  bottom: var(--app-bottom-offset);
+  left: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.app-nav__inner {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 14px;
+  border: 1px solid rgba(18, 18, 18, 0.08);
+  border-radius: 999px;
+  background: var(--judah-white);
+  box-shadow: 0 10px 30px rgba(18, 18, 18, 0.08);
+}
+
+.app-nav__button {
+  position: relative;
+  display: flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--judah-black);
+  cursor: pointer;
+}
+
+.app-nav__dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: var(--judah-black);
+}
+
+.app-nav__icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background-color: rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(1px);
+}
+
+.modal-sheet {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--judah-white);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.modal-sheet__body {
+  flex: 1;
+  width: 100%;
+  overflow-y: auto;
+  padding: 40px var(--app-horizontal-padding) calc(128px + env(safe-area-inset-bottom)) var(--app-horizontal-padding);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 40px, black 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 40px, black 100%);
+  scrollbar-width: none;
+}
+
+.modal-sheet__footer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  padding: 24px var(--app-horizontal-padding) calc(32px + env(safe-area-inset-bottom)) var(--app-horizontal-padding);
+  background: linear-gradient(to top, var(--judah-white) 80%, rgba(232, 232, 232, 0));
 }

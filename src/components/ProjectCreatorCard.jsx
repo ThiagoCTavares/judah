@@ -1,7 +1,7 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useLayoutEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Check, ArrowRight, ArrowLeft, MagnifyingGlass } from '@phosphor-icons/react'
-import { PROJECT_ICONS, PROJECT_COLORS } from '../constants'
+import { PROJECT_ICONS, PROJECT_COLORS, getProjectIconById } from '../constants'
 
 const SEARCH_EQUIVALENTS = {
   // PT -> EN / domain terms
@@ -149,6 +149,7 @@ function buildTermVariants(term) {
 export function ProjectCreatorCard({ onSave, onCancel }) {
   const MotionDiv = motion.div
   const [step, setStep] = useState(0)
+  const nameInputRef = useRef(null)
   
   const [name, setName] = useState('')
   const [iconSearch, setIconSearch] = useState('') // Busca de ícones
@@ -157,6 +158,7 @@ export function ProjectCreatorCard({ onSave, onCancel }) {
   const [selectedColor, setSelectedColor] = useState(PROJECT_COLORS[0].value) // Inicia com o valor da primeira cor
   const [details, setDetails] = useState('')
   
+  const defaultIconId = 'Plus'
   const activeIconObj = PROJECT_ICONS.find(i => i.id === selectedIconId)
   const ActiveIconComponent = activeIconObj ? activeIconObj.icon : null
 
@@ -248,13 +250,13 @@ export function ProjectCreatorCard({ onSave, onCancel }) {
     return PROJECT_COLORS.filter(colorObj => colorObj.tags.includes(search))
   }, [colorSearch])
 
-  // Callback Ref para foco instantâneo
-  const setFocus = useCallback((node) => {
-    if (node) {
-      node.focus({ preventScroll: true })
-      setTimeout(() => node.focus({ preventScroll: true }), 50)
+  useLayoutEffect(() => {
+    if (step !== 0) return
+    const input = nameInputRef.current
+    if (input) {
+      input.focus({ preventScroll: true })
     }
-  }, [])
+  }, [step])
 
   const handleCommitName = () => {
     if (name.trim().length > 0) {
@@ -325,7 +327,7 @@ export function ProjectCreatorCard({ onSave, onCancel }) {
            {ActiveIconComponent ? <ActiveIconComponent size={24} weight="regular" /> : <Plus size={24} weight="bold" />}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-           <input ref={setFocus} type="text" className="project-input" placeholder="Qual é o nome do projeto?" value={name} onChange={(e) => setName(e.target.value)} onBlur={handleBlurName} onKeyDown={handleNameKeyDown} disabled={step >= 2} style={{ width: '100%', border: 'none', outline: 'none', margin: 0, padding: 0, textAlign: 'left', fontSize: '18px', fontWeight: 600, lineHeight: '1.2', color: '#121212', background: 'transparent', textOverflow: 'ellipsis', opacity: 1 }} />
+           <input ref={nameInputRef} autoFocus type="text" className="project-input" placeholder="Qual é o nome do projeto?" value={name} onChange={(e) => setName(e.target.value)} onBlur={handleBlurName} onKeyDown={handleNameKeyDown} disabled={step >= 2} style={{ width: '100%', border: 'none', outline: 'none', margin: 0, padding: 0, textAlign: 'left', fontSize: '18px', fontWeight: 600, lineHeight: '1.2', color: '#121212', background: 'transparent', textOverflow: 'ellipsis', opacity: 1 }} />
         </div>
       </div>
 
@@ -439,7 +441,7 @@ export function ProjectCreatorCard({ onSave, onCancel }) {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '16px' }}>
                <button onClick={() => setStep(2)} style={{ background: 'transparent', border: 'none', padding: '8px 0', color: '#121212', fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}><ArrowLeft weight="bold" size={16} /> Voltar</button>
-               <button onClick={() => onSave({ name, icon: ActiveIconComponent, color: selectedColor, details })} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', backgroundColor: '#121212', color: 'white', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}><Plus weight="bold" size={18} /> Criar</button>
+               <button onClick={() => onSave({ name: name.trim(), iconId: selectedIconId || defaultIconId, icon: ActiveIconComponent || getProjectIconById(defaultIconId), color: selectedColor, details: details.trim() })} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', backgroundColor: '#121212', color: 'white', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}><Plus weight="bold" size={18} /> Criar</button>
             </div>
           </MotionDiv>
         )}
