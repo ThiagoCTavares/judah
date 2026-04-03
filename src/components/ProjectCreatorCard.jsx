@@ -146,19 +146,19 @@ function buildTermVariants(term) {
   return uniqueStrings(variants.map((value) => normalizeSearchText(value)))
 }
 
-export function ProjectCreatorCard({ onSave, onCancel }) {
+export function ProjectCreatorCard({ onSave, onCancel, initialProject = null, submitLabel = 'Criar' }) {
   const MotionDiv = motion.div
   const [step, setStep] = useState(0)
   const nameInputRef = useRef(null)
   
-  const [name, setName] = useState('')
+  const [name, setName] = useState(initialProject?.name || '')
   const [iconSearch, setIconSearch] = useState('') // Busca de ícones
   const [colorSearch, setColorSearch] = useState('') // NOVO: Busca de cores
-  const [selectedIconId, setSelectedIconId] = useState(null)
-  const [selectedColor, setSelectedColor] = useState(PROJECT_COLORS[0].value) // Inicia com o valor da primeira cor
-  const [details, setDetails] = useState('')
+  const [selectedIconId, setSelectedIconId] = useState(initialProject?.iconId || null)
+  const [selectedColor, setSelectedColor] = useState(initialProject?.color || PROJECT_COLORS[0].value)
+  const [details, setDetails] = useState(initialProject?.details || '')
   
-  const defaultIconId = 'Plus'
+  const defaultIconId = initialProject?.iconId || 'Plus'
   const activeIconObj = PROJECT_ICONS.find(i => i.id === selectedIconId)
   const ActiveIconComponent = activeIconObj ? activeIconObj.icon : null
 
@@ -267,7 +267,7 @@ export function ProjectCreatorCard({ onSave, onCancel }) {
   const handleBlurName = () => {
     if (step === 0) {
       if (name.trim().length === 0) {
-        onCancel() 
+        if (!initialProject) onCancel()
       } else {
         handleCommitName()
       }
@@ -441,7 +441,7 @@ export function ProjectCreatorCard({ onSave, onCancel }) {
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: '16px' }}>
                <button onClick={() => setStep(2)} style={{ background: 'transparent', border: 'none', padding: '8px 0', color: '#121212', fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}><ArrowLeft weight="bold" size={16} /> Voltar</button>
-               <button onClick={() => onSave({ name: name.trim(), iconId: selectedIconId || defaultIconId, icon: ActiveIconComponent || getProjectIconById(defaultIconId), color: selectedColor, details: details.trim() })} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', backgroundColor: '#121212', color: 'white', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}><Plus weight="bold" size={18} /> Criar</button>
+               <button onClick={() => onSave({ name: name.trim(), iconId: selectedIconId || defaultIconId, icon: getProjectIconById(selectedIconId || defaultIconId), color: selectedColor, details: details.trim() })} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', backgroundColor: '#121212', color: 'white', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}>{initialProject ? <Check weight="bold" size={18} /> : <Plus weight="bold" size={18} />} {submitLabel}</button>
             </div>
           </MotionDiv>
         )}

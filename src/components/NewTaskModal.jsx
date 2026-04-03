@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { createElement, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Clock, CaretDown, Hash, PuzzlePiece, ListChecks, PencilSimple } from '@phosphor-icons/react'
+import { getProjectIconById } from '../constants'
 import { formatDateKey } from '../task-utils'
 
 // Opções de Horário
@@ -45,6 +46,17 @@ export function NewTaskModal({ onClose, onSaveTask, projects, selectedDate }) {
   const darkColor = 'var(--judah-dark)'
   const mediumColor = 'var(--judah-medium)'
   const lightColor = 'var(--judah-light)'
+  const selectedProjectData = useMemo(
+    () => projects.find((project) => project.id === selectedProject) || null,
+    [projects, selectedProject]
+  )
+  const selectedProjectIconNode = useMemo(() => {
+    if (!selectedProjectData) return null
+    return createElement(getProjectIconById(selectedProjectData.iconId), {
+      size: 16,
+      weight: 'regular',
+    })
+  }, [selectedProjectData])
 
   // --- HANDLERS ---
   const handleNameCommit = () => {
@@ -198,13 +210,20 @@ export function NewTaskModal({ onClose, onSaveTask, projects, selectedDate }) {
                 backgroundColor: 'transparent', padding: '8px 0px', borderRadius: '0px',
                 width: '100%', boxSizing: 'border-box', borderBottom: '1px solid rgba(0,0,0,0.05)'
               }}>
-                <span style={{ fontSize: '18px', fontWeight: 500, color: selectedProject ? darkColor : mediumColor }}>
-                  {selectedProject === 'none'
-                    ? 'Sem projeto'
-                    : selectedProject
-                      ? projects.find((project) => project.id === selectedProject)?.name
-                      : 'Selecione um projeto...'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                  {selectedProjectData && (
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: selectedProjectData.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', flexShrink: 0 }}>
+                      {selectedProjectIconNode}
+                    </div>
+                  )}
+                  <span style={{ fontSize: '18px', fontWeight: 500, color: selectedProject ? darkColor : mediumColor, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {selectedProject === 'none'
+                      ? 'Sem projeto'
+                      : selectedProjectData
+                        ? selectedProjectData.name
+                        : 'Selecione um projeto...'}
+                  </span>
+                </div>
                 <CaretDown size={20} color={mediumColor} weight="bold" />
               </div>
             </div>

@@ -45,8 +45,8 @@ function App() {
   }
 
   const { calendarCells, monthLabel } = useMemo(() => {
-    const year = today.getFullYear()
-    const month = today.getMonth()
+    const year = selectedDate.getFullYear()
+    const month = selectedDate.getMonth()
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const firstWeekday = new Date(year, month, 1).getDay()
     const usedSlots = firstWeekday + daysInMonth
@@ -58,7 +58,7 @@ function App() {
       return dayNumber
     })
     return { calendarCells: cells, monthLabel: MONTH_NAMES[month] }
-  }, [today])
+  }, [selectedDate])
 
   const selectedDateInfo = useMemo(() => {
     const weekday = WEEKDAYS_FULL[selectedDate.getDay()]
@@ -120,6 +120,23 @@ function App() {
     setOverdueQueueIds((currentQueueIds) => currentQueueIds.filter((currentTaskId) => currentTaskId !== taskId))
   }
 
+  const handleDeleteProject = (projectId) => {
+    setProjects((currentProjects) => currentProjects.filter((project) => project.id !== projectId))
+    setTasks((currentTasks) => {
+      const removedTaskIds = new Set(
+        currentTasks
+          .filter((task) => task.projectId === projectId)
+          .map((task) => task.id)
+      )
+
+      if (removedTaskIds.size > 0) {
+        setOverdueQueueIds((currentQueueIds) => currentQueueIds.filter((taskId) => !removedTaskIds.has(taskId)))
+      }
+
+      return currentTasks.filter((task) => task.projectId !== projectId)
+    })
+  }
+
   const handleRemoveFromOverdueQueue = (taskId) => {
     setOverdueQueueIds((currentQueueIds) => currentQueueIds.filter((currentTaskId) => currentTaskId !== taskId))
   }
@@ -168,6 +185,16 @@ function App() {
     handleRemoveFromOverdueQueue(currentOverdueTask.id)
   }
 
+  const handleChangeCalendarMonth = (nextMonth) => {
+    setSelectedDate((currentDate) => {
+      const currentYear = currentDate.getFullYear()
+      const currentDay = currentDate.getDate()
+      const lastDayOfTargetMonth = new Date(currentYear, nextMonth + 1, 0).getDate()
+      const nextDay = Math.min(currentDay, lastDayOfTargetMonth)
+      return new Date(currentYear, nextMonth, nextDay)
+    })
+  }
+
   return (
     <div className="app-root">
       <AnimatePresence>
@@ -210,6 +237,7 @@ function App() {
             today={today}
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
+            onChangeMonth={handleChangeCalendarMonth}
             selectedDateInfo={selectedDateInfo}
             onOpenTaskModal={() => setIsTaskModalOpen(true)}
             tasks={tasksForSelectedDate}
@@ -217,6 +245,7 @@ function App() {
             overdueDateKeys={overdueDateKeys}
             projects={projects}
             onDeleteTask={handleDeleteTask}
+            onUpdateTask={handleUpdateTask}
             onResolveOverdueDone={handleArchiveTaskAsDone}
             onResolveOverdueKeep={handleKeepTaskOverdue}
             onTaskSheetVisibilityChange={setIsCalendarTaskSheetOpen}
@@ -231,6 +260,8 @@ function App() {
             archivedTasks={archivedTasks}
             overdueProjectIds={overdueProjectIds}
             onDeleteTask={handleDeleteTask}
+            onDeleteProject={handleDeleteProject}
+            onUpdateTask={handleUpdateTask}
             onResolveOverdueDone={handleArchiveTaskAsDone}
             onResolveOverdueKeep={handleKeepTaskOverdue}
             onTaskSheetVisibilityChange={setIsProjectTaskSheetOpen}

@@ -38,6 +38,9 @@ body {
   margin: 0;
   background-color: var(--judah-white);
   color: var(--judah-black);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 body,
@@ -46,6 +49,14 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
 }
 
 button,
@@ -188,4 +199,57 @@ select {
   box-sizing: border-box;
   padding: 24px var(--app-horizontal-padding) calc(32px + env(safe-area-inset-bottom)) var(--app-horizontal-padding);
   background: linear-gradient(to top, var(--judah-white) 80%, rgba(232, 232, 232, 0));
+}
+
+.calendar-task-chip__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.calendar-task-chip__label {
+  display: block;
+  width: 68px;
+  overflow: hidden;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.calendar-task-chip__text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendar-task-chip__time {
+  display: block;
+  font-size: 0.65rem;
+  line-height: 1.1;
+  color: var(--judah-medium);
+  font-weight: 400;
+  text-align: center;
+}
+
+.calendar-task-chip__marquee {
+  display: inline-flex;
+  align-items: center;
+  min-width: max-content;
+  animation: calendar-task-chip-marquee 7s linear infinite;
+}
+
+.calendar-task-chip__marquee > span + span {
+  margin-left: 24px;
+}
+
+@keyframes calendar-task-chip-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - 12px));
+  }
 }

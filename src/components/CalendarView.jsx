@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ListChecks, Plus } from '@phosphor-icons/react'
-import { WEEKDAYS, getProjectIconById } from '../constants'
+import { CaretDown, ListChecks, Plus } from '@phosphor-icons/react'
+import { MONTH_NAMES, WEEKDAYS, getProjectIconById } from '../constants'
 import { formatDateKey, getTaskDisplayTime } from '../task-utils'
 import { TaskDetailsSheet } from './TaskDetailsSheet'
 
-export function CalendarView({ cells, monthLabel, today, selectedDate, onSelectDate, selectedDateInfo, onOpenTaskModal, tasks, allTasks, overdueDateKeys, projects, onDeleteTask, onResolveOverdueDone, onResolveOverdueKeep, onTaskSheetVisibilityChange }) {
+export function CalendarView({ cells, monthLabel, today, selectedDate, onSelectDate, onChangeMonth, selectedDateInfo, onOpenTaskModal, tasks, allTasks, overdueDateKeys, projects, onDeleteTask, onUpdateTask, onResolveOverdueDone, onResolveOverdueKeep, onTaskSheetVisibilityChange }) {
   const borderColor = 'var(--judah-light)'
   const headerColor = 'var(--judah-black)'
   const dayColor = 'var(--judah-dark)'
   const activeDayBg = 'var(--judah-dark)'
   const MotionDiv = motion.div
   const [taskSelection, setTaskSelection] = useState({ dateKey: '', taskId: null })
+  const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false)
 
   const projectsById = new Map(projects.map((project) => [project.id, project]))
   const tasksByDateKey = allTasks.reduce((accumulator, task) => {
@@ -40,8 +41,13 @@ export function CalendarView({ cells, monthLabel, today, selectedDate, onSelectD
 
   const handleDayClick = (day) => {
     if (!day) return
-    const newDate = new Date(today.getFullYear(), today.getMonth(), day)
+    const newDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day)
     onSelectDate(newDate)
+  }
+
+  const handleSelectMonth = (monthIndex) => {
+    onChangeMonth?.(monthIndex)
+    setIsMonthPickerOpen(false)
   }
 
   const handleSelectTask = (taskId) => {
@@ -54,8 +60,56 @@ export function CalendarView({ cells, monthLabel, today, selectedDate, onSelectD
 
   return (
     <div style={{ width: '100%', boxSizing: 'border-box', padding: '60px var(--app-horizontal-padding) 0 var(--app-horizontal-padding)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', marginBottom: '32px' }}>
-        <div style={{ fontSize: '1.25rem', color: 'var(--judah-black)', fontWeight: 400, letterSpacing: '-0.025em' }}>{monthLabel}</div>
+      <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', marginBottom: '32px', position: 'relative' }}>
+        <button
+          type="button"
+          onClick={() => setIsMonthPickerOpen((currentValue) => !currentValue)}
+          style={{ padding: 0, border: 'none', background: 'transparent', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', color: 'var(--judah-black)' }}
+          aria-haspopup="listbox"
+          aria-expanded={isMonthPickerOpen}
+        >
+          <span style={{ fontSize: '1.25rem', color: 'var(--judah-black)', fontWeight: 400, letterSpacing: '-0.025em' }}>{monthLabel}</span>
+          <CaretDown size={14} weight="bold" color="var(--judah-medium)" />
+        </button>
+
+        <AnimatePresence>
+          {isMonthPickerOpen && (
+            <>
+              <MotionDiv
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMonthPickerOpen(false)}
+                style={{ position: 'fixed', inset: 0, zIndex: 9997, background: 'transparent' }}
+              />
+
+              <MotionDiv
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                style={{ position: 'absolute', top: 'calc(100% + 12px)', right: 0, zIndex: 9998, width: '168px', padding: '10px', borderRadius: '18px', border: '1px solid rgba(18,18,18,0.06)', backgroundColor: 'var(--judah-white)', boxShadow: '0 14px 32px rgba(18,18,18,0.1)', boxSizing: 'border-box' }}
+              >
+                <div role="listbox" aria-label="Selecionar mês" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  {MONTH_NAMES.map((monthName, monthIndex) => {
+                    const isActiveMonth = monthIndex === selectedDate.getMonth()
+
+                    return (
+                      <button
+                        key={monthName}
+                        type="button"
+                        onClick={() => handleSelectMonth(monthIndex)}
+                        style={{ padding: '10px 12px', border: 'none', borderRadius: '12px', backgroundColor: isActiveMonth ? 'rgba(18,18,18,0.06)' : 'transparent', color: isActiveMonth ? 'var(--judah-black)' : 'var(--judah-dark)', fontSize: '0.95rem', fontWeight: isActiveMonth ? 600 : 500, textAlign: 'left', cursor: 'pointer' }}
+                      >
+                        {monthName}
+                      </button>
+                    )
+                  })}
+                </div>
+              </MotionDiv>
+            </>
+          )}
+        </AnimatePresence>
       </div>
 
       <div style={{ width: '100%', borderTop: `1px solid ${borderColor}`, borderLeft: `1px solid ${borderColor}`, backgroundColor: 'var(--judah-white)' }}>
@@ -67,7 +121,7 @@ export function CalendarView({ cells, monthLabel, today, selectedDate, onSelectD
         <div className="grid grid-cols-7 auto-rows-[minmax(60px,1fr)]">
           {cells.map((day, index) => {
             let cellDate = null
-            if (day) cellDate = new Date(today.getFullYear(), today.getMonth(), day)
+            if (day) cellDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day)
             const isToday = cellDate && isSameDay(cellDate, today)
             const isSelected = cellDate && isSameDay(cellDate, selectedDate)
             const dateKey = cellDate ? formatDateKey(cellDate) : ''
@@ -95,7 +149,7 @@ export function CalendarView({ cells, monthLabel, today, selectedDate, onSelectD
                             <span
                               key={task.id}
                               title={task.name}
-                              style={{ width: '6px', height: '6px', flexShrink: 0, borderRadius: '50%', backgroundColor: project?.color || 'var(--judah-dark)' }}
+                              style={{ width: '6px', height: '6px', flexShrink: 0, borderRadius: '50%', backgroundColor: project?.color || 'var(--judah-dark)', boxShadow: '0 0 0 0.5px rgba(18,18,18,0.08), 0 1px 2px rgba(18,18,18,0.12)' }}
                             />
                           )
                         })}
@@ -127,6 +181,7 @@ export function CalendarView({ cells, monthLabel, today, selectedDate, onSelectD
             const TaskIcon = project ? getProjectIconById(project.iconId) : ListChecks
             const taskColor = project?.color || 'var(--judah-dark)'
             const isTaskSelected = task.id === selectedTask?.id
+            const shouldScrollTaskName = task.name.length > 12
 
             return (
               <button
@@ -136,10 +191,24 @@ export function CalendarView({ cells, monthLabel, today, selectedDate, onSelectD
                 aria-pressed={isTaskSelected}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flexShrink: 0, padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
               >
-                <div title={task.name} style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: taskColor, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: isTaskSelected ? '0 0 0 2px rgba(18,18,18,0.12), 0 4px 12px rgba(0,0,0,0.12)' : '0 4px 12px rgba(0,0,0,0.1)', transform: isTaskSelected ? 'translateY(-1px)' : 'none', transition: 'box-shadow 160ms ease, transform 160ms ease' }}>
+                <span className="calendar-task-chip__time">
+                  {getTaskDisplayTime(task)}
+                </span>
+                <div title={task.name} style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: taskColor, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: isTaskSelected ? '0 0 0 2px rgba(18,18,18,0.12)' : 'none', transform: isTaskSelected ? 'translateY(-1px)' : 'none', transition: 'box-shadow 160ms ease, transform 160ms ease' }}>
                   <TaskIcon color="#ffffff" size={20} weight="regular" />
                 </div>
-                <span style={{ fontSize: '0.875rem', color: isTaskSelected ? 'var(--judah-black)' : '#363636', fontWeight: isTaskSelected ? 600 : 500 }}>{getTaskDisplayTime(task)}</span>
+                <span className="calendar-task-chip__meta">
+                  <span className="calendar-task-chip__label" style={{ color: isTaskSelected ? 'var(--judah-black)' : '#363636', fontWeight: isTaskSelected ? 600 : 500 }}>
+                    {shouldScrollTaskName ? (
+                      <span className="calendar-task-chip__marquee">
+                        <span>{task.name}</span>
+                        <span aria-hidden="true">{task.name}</span>
+                      </span>
+                    ) : (
+                      <span className="calendar-task-chip__text">{task.name}</span>
+                    )}
+                  </span>
+                </span>
               </button>
             )
           })}
@@ -158,6 +227,7 @@ export function CalendarView({ cells, monthLabel, today, selectedDate, onSelectD
             projects={projects}
             onClose={handleCloseTaskSheet}
             onDeleteTask={onDeleteTask}
+            onUpdateTask={onUpdateTask}
             onResolveOverdueDone={onResolveOverdueDone}
             onResolveOverdueKeep={onResolveOverdueKeep}
           />
